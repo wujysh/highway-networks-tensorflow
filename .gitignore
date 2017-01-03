@@ -1,0 +1,7 @@
+logs/
+models/
+mnist/
+checkpoints/
+.idea/
+
+*.pyc
