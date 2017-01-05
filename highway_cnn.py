@@ -30,7 +30,7 @@ def weight_bias(W_shape, b_shape, bias_init=0.1):
     return W, b
 
 def dense_layer(x, W_shape, b_shape, activation):
-    W, b = weight_bias([W_shape, b_shape], [b_shape])
+    W, b = weight_bias(W_shape, b_shape)
     return activation(tf.matmul(x, W) + b)
 
 def conv2d_layer(x, W_shape, b_shape, strides, padding):
@@ -89,7 +89,7 @@ with tf.Graph().as_default(), tf.Session() as sess:
     # define training and accuracy operations
     with tf.name_scope("loss") as scope:
         loss = -tf.reduce_sum(y_ * tf.log(y))
-        tf.scalar_summary("loss", loss)
+        tf.summary.scalar("loss", loss)
 
     with tf.name_scope("train") as scope:
         train_step = tf.train.GradientDescentOptimizer(1e-2).minimize(loss)
@@ -97,15 +97,15 @@ with tf.Graph().as_default(), tf.Session() as sess:
     with tf.name_scope("test") as scope:
         correct_prediction = tf.equal(tf.argmax(y, 1), tf.argmax(y_, 1))
         accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float"))
-        tf.scalar_summary('accuracy', accuracy)
+        tf.summary.scalar('accuracy', accuracy)
 
-    merged_summaries = tf.merge_all_summaries()
+    merged_summaries = tf.summary.merge_all()
 
     # create a saver instance to restore from the checkpoint
     saver = tf.train.Saver(max_to_keep=1)
 
     # initialize our variables
-    sess.run(tf.initialize_all_variables())
+    sess.run(tf.global_variables_initializer())
 
     # save the graph definition as a protobuf file
     tf.train.write_graph(sess.graph_def, model_path, 'highway.pb', as_text=False)
@@ -117,7 +117,7 @@ with tf.Graph().as_default(), tf.Session() as sess:
             saver.restore(sess, latest_checkpoint_path)
 
     if not FLAGS.skip_training:
-        summary_writer = tf.train.SummaryWriter(summary_path, sess.graph_def)
+        summary_writer = tf.summary.FileWriter(summary_path, sess.graph_def)
 
         num_steps = 5000
         checkpoint_interval = 100
